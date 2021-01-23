@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 # import dependence
-from confluent_kafka import Producer, Consumer, KafkaError
+from confluent_kafka import Producer, KafkaError
 import json
 from datetime import date
 import logging
 import os
 import sys
 import time
-
-from constants import config
-
+import random
+import ccloud_lib as ccloud
 
 delivered_records = 0
 
@@ -30,19 +29,26 @@ def acked(err, msg):
         )
 
 
-def produce(topic, data, random_key):
+def produce(config, topic, data, should_random):
     # construct producer
     producer = Producer(config)
 
     for one in data:
         # prepare message
-        if random_key:
+        if should_random:
             record_key = random.randint(1, 5)
         else:
             record_key = "inclass-2"
+
         record_value = json.dumps(one)
         logging.info("Producing record: {}\t{}".format(record_key, record_value))
-        producer.produce(topic, key=record_key, value=record_value, on_delivery=acked)
+        producer.produce(
+            topic,
+            key=str(record_key),
+            value=record_value,
+            on_delivery=acked,
+            partition=record_key,
+        )
         time.sleep(0.25)
         # from previous produce() calls.
         producer.poll()
@@ -55,8 +61,9 @@ def produce(topic, data, random_key):
     )
 
 
-def main()
+def main(config_path, should_random=False):
     topic = "inclass-2"
+    config = ccloud.read_ccloud_config(config_path)
 
     # set log file path
     log_path = "./log"
@@ -80,7 +87,7 @@ def main()
         data = json.load(json_file)
 
     # normal running
-    produce(topic, data)
+    produce(config, topic, data, should_random)
 
 
 if __name__ == "__main__":

@@ -128,6 +128,7 @@ def parse_args():
         help="path to Confluent Cloud configuration file",
     )
     required.add_argument("-t", dest="topic", default="inclass-2", help="topic name")
+    required.add_argument()
     args = parser.parse_args()
 
     return args

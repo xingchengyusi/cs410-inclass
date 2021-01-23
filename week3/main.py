@@ -7,17 +7,17 @@ import ccloud_lib as ccloud
 
 def main():
     # how many processes run at same time.
-    pnum = 2
-    cnum = 2
+    pnum = 1
+    cnum = 0
     plist = []
 
     for i in range(pnum):
-        p = Process(target=pmain)
+        p = Process(target=pmain, args=("./confluent.config", False))
         p.start()
         plist.append(p)
 
     for j in range(cnum):
-        c = Process(target=cmain)
+        c = Process(target=cmain, args=("./confluent.config", 0, str(j)))
         c.start()
         plist.append(c)
 
