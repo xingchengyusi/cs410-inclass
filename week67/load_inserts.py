@@ -8,13 +8,8 @@ import psycopg2.extras
 import argparse
 import csv
 from io import StringIO
+from constants import DBname, DBuser, DBpwd, TableName, Datafile
 
-
-DBname = "acscensustract"
-DBuser = "dgu"
-DBpwd = "dgu"
-TableName = "CensusData"
-Datafile = "./data/acs2015_census_tract_data.csv"  # name of the data file to be loaded
 
 CreateDB = False  # indicates whether the DB table should be (re)-created
 Year = 2015
@@ -250,62 +245,16 @@ def clean_csv_value(value) -> str:
 
 def load(conn, rlist) -> None:
     with conn.cursor() as cursor:
-        print(f"Loading 74000 rows")
+        print(f"Loading {len(rlist)} rows")
 
         if COPY_FROM:
             print("copy from method")
             file_like_io = StringIO()
-            file_like_io.write(
-                "|".join(
-                    map(
-                        clean_csv_value,
-                        (
-                            Year,
-                            rlist[0],
-                            rlist[1],
-                            rlist[2],
-                            rlist[3],
-                            rlist[4],
-                            rlist[5],
-                            rlist[6],
-                            rlist[7],
-                            rlist[8],
-                            rlist[9],
-                            rlist[10],
-                            rlist[11],
-                            rlist[12],
-                            rlist[13],
-                            rlist[14],
-                            rlist[15],
-                            rlist[16],
-                            rlist[17],
-                            rlist[18],
-                            rlist[19],
-                            rlist[20],
-                            rlist[21],
-                            rlist[22],
-                            rlist[23],
-                            rlist[24],
-                            rlist[25],
-                            rlist[26],
-                            rlist[27],
-                            rlist[28],
-                            rlist[29],
-                            rlist[30],
-                            rlist[31],
-                            rlist[32],
-                            rlist[33],
-                            rlist[34],
-                            rlist[35],
-                            rlist[36],
-                        ),
-                    )
-                )
-                + "\n"
-            )
+            for r in rlist:
+                file_like_io.write(row2vals(r) + '\n')
 
             start = time.perf_counter()
-            cursor.copy_from(file_like_io, TableName, sep="|")
+            cursor.copy_from(file_like_io, TableName, sep=",")
             elapsed = time.perf_counter() - start
         elif BATCH:
             print("batch insert")
@@ -366,10 +315,9 @@ def load(conn, rlist) -> None:
 
             # copy from temp table.
             if TEMP:
-                cursor.execute(
-                    f"""
-                            CREATE TABLE {TableName} AS TABLE {TableName};
-                            """
+                cursor.execute(f"""
+                CREATE TABLE {TableName} AS TABLE {TableName};
+                """
                 )
             elapsed = time.perf_counter() - start
 
